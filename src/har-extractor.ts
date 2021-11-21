@@ -18,22 +18,36 @@ export const getEntryContentAsBuffer = (entry: Entry): Buffer | undefined => {
     }
 };
 
-export const convertEntryAsFilePathFormat = (entry: Entry, removeQueryString: boolean = false): string => {
+export const convertEntryAsFilePathFormat = (
+    entry: Entry,
+    verbose: boolean = false,
+    removeQueryString: boolean = false,
+    putReqStartDateTimeInFileName: boolean = false
+): string => {
     const requestURL = entry.request.url;
     const stripSchemaURL: string = humanizeUrl(removeQueryString ? requestURL.split("?")[0] : requestURL);
     const dirnames: string[] = stripSchemaURL.split("/").map((pathname) => {
         return filenamify(pathname);
     });
-    const fileName = dirnames[dirnames.length - 1];
+    let fileName = dirnames[dirnames.length - 1];
     if (
         fileName &&
         !fileName.includes(".html") &&
         entry.response.content.mimeType &&
         entry.response.content.mimeType.includes("text/html")
     ) {
-        return dirnames.join("/") + "/index.html";
+        fileName = "index.html";
+        dirnames.push(fileName);
     }
-    return dirnames.join("/");
+    if (putReqStartDateTimeInFileName) {
+        fileName = `${entry.startedDateTime}-${fileName}`;
+        dirnames[dirnames.length - 1] = fileName;
+    }
+    let fp = dirnames.join("/");
+    if (verbose) {
+        console.log(entry.startedDateTime, fp);
+    }
+    return fp;
 };
 
 export interface ExtractOptions {
@@ -41,6 +55,7 @@ export interface ExtractOptions {
     verbose?: boolean;
     dryRun?: boolean;
     removeQueryString?: boolean;
+    putReqStartDateTimeInFileName?: boolean;
 }
 
 export const extract = (harContent: Har, options: ExtractOptions) => {
@@ -49,12 +64,17 @@ export const extract = (harContent: Har, options: ExtractOptions) => {
         if (!buffer) {
             return;
         }
-        const outputPath = path.join(options.outputDir, convertEntryAsFilePathFormat(entry, options.removeQueryString));
+        const outputPath = path.join(
+            options.outputDir,
+            convertEntryAsFilePathFormat(
+                entry,
+                options.verbose,
+                options.removeQueryString,
+                options.putReqStartDateTimeInFileName
+            )
+        );
         if (!options.dryRun) {
             makeDir.sync(path.dirname(outputPath));
-        }
-        if (options.verbose) {
-            console.log(outputPath);
         }
         if (!options.dryRun) {
             fs.writeFileSync(outputPath, buffer);

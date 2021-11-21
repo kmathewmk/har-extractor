@@ -22,23 +22,28 @@ const cli = meow(
         flags: {
             output: {
                 type: "string",
-                alias: "o"
+                alias: "o",
             },
             removeQueryString: {
                 type: "boolean",
                 alias: "r",
-                default: false
+                default: false,
+            },
+            putReqStartDateTimeInFileName: {
+                type: "boolean",
+                alias: "t",
+                default: true,
             },
             verbose: {
                 type: "boolean",
-                default: true
+                default: true,
             },
             dryRun: {
                 type: "boolean",
-                default: false
-            }
+                default: false,
+            },
         },
-        autoHelp: true
+        autoHelp: true,
     }
 );
 
@@ -52,7 +57,8 @@ try {
         verbose: cli.flags.verbose,
         dryRun: cli.flags.dryRun,
         removeQueryString: cli.flags.removeQueryString,
-        outputDir: cli.flags.output
+        putReqStartDateTimeInFileName: cli.flags.putReqStartDateTimeInFileName,
+        outputDir: cli.flags.output,
     });
 } catch (error) {
     console.error(error);

@@ -56,6 +56,18 @@ wikipedia/en.wikipedia.org/static/images/mobile/copyright/wikipedia-wordmark-en.
 
 See [Releases page](https://github.com/azu/har-extractor/releases).
 
+## Building
+
+Compile Typescript to Javascript
+
+    npm run build
+
+## Running
+
+Extract from har file with request start datetime in filename (and without query string)
+
+    nvm run bin/cmd.js live-preroll.har --putReqStartDateTimeInFileName --removeQueryString --output out
+
 ## Running tests
 
 Install devDependencies and Run `npm test`:
