@@ -18,12 +18,7 @@ export const getEntryContentAsBuffer = (entry: Entry): Buffer | undefined => {
     }
 };
 
-export const convertEntryAsFilePathFormat = (
-    entry: Entry,
-    verbose: boolean = false,
-    removeQueryString: boolean = false,
-    putReqStartDateTimeInFileName: boolean = false
-): string => {
+export const convertEntryAsFilePathFormat = (entry: Entry, removeQueryString: boolean = false): string[] => {
     const requestURL = entry.request.url;
     const stripSchemaURL: string = humanizeUrl(removeQueryString ? requestURL.split("?")[0] : requestURL);
     const dirnames: string[] = stripSchemaURL.split("/").map((pathname) => {
@@ -39,15 +34,7 @@ export const convertEntryAsFilePathFormat = (
         fileName = "index.html";
         dirnames.push(fileName);
     }
-    if (putReqStartDateTimeInFileName) {
-        fileName = `${entry.startedDateTime}-${fileName}`;
-        dirnames[dirnames.length - 1] = fileName;
-    }
-    let fp = dirnames.join("/");
-    if (verbose) {
-        console.log(entry.startedDateTime, fp);
-    }
-    return fp;
+    return dirnames;
 };
 
 export interface ExtractOptions {
@@ -64,15 +51,24 @@ export const extract = (harContent: Har, options: ExtractOptions) => {
         if (!buffer) {
             return;
         }
-        const outputPath = path.join(
-            options.outputDir,
-            convertEntryAsFilePathFormat(
-                entry,
-                options.verbose,
-                options.removeQueryString,
-                options.putReqStartDateTimeInFileName
-            )
-        );
+        let dirnames: string[] = convertEntryAsFilePathFormat(entry, options.removeQueryString);
+        dirnames.splice(0, 0, options.outputDir);
+        let outputPath: string = dirnames.join(path.sep);
+        let outputPathExists: boolean = fs.existsSync(outputPath);
+        if (outputPathExists) {
+            if (options.putReqStartDateTimeInFileName) {
+                let fileName = dirnames[dirnames.length - 1];
+                // prefix req start datetime so that file is not overwritten
+                fileName = `${entry.startedDateTime}-${fileName}`;
+                dirnames[dirnames.length - 1] = fileName;
+                outputPath = dirnames.join(path.sep);
+            } else {
+                // file will be overwritten
+            }
+        }
+        if (options.verbose) {
+            console.log(entry.startedDateTime, outputPathExists, process.cwd(), outputPath);
+        }
         if (!options.dryRun) {
             makeDir.sync(path.dirname(outputPath));
         }
