@@ -69,8 +69,13 @@ export const extract = (harContent: Har, options: ExtractOptions) => {
         if (options.verbose) {
             console.log(entry.startedDateTime, outputPathExists, process.cwd(), outputPath);
         }
+        let outputDir = path.dirname(outputPath);
         if (!options.dryRun) {
-            makeDir.sync(path.dirname(outputPath));
+            // rename file if any for upcoming directory
+            if (fs.existsSync(outputDir) && fs.lstatSync(outputDir).isFile()) {
+                fs.renameSync(outputDir, outputDir + "-renamedForDir");
+            }
+            makeDir.sync(outputDir);
         }
         if (!options.dryRun) {
             fs.writeFileSync(outputPath, buffer);
